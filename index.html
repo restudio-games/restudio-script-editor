@@ -45,9 +45,163 @@
         .input-prompt { color: #ff9800; margin-bottom: 5px; }
 
         .btn-download svg { fill: #fff; }
+        
+        /* Splash Screen Styles */
+        #splash, #noticePanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 460px;
+            background: #2a2a2a;
+            border: 1px solid #000;
+            border-radius: 6px;
+            overflow: hidden;
+            z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        #banner {
+            background: #000;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            border-bottom: 1px solid #111;
+        }
+
+        #banner img {
+            height: 22px;
+        }
+
+        #close {
+            font-size: 14px;
+            color: #777;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #close:hover {
+            color: #fff;
+        }
+
+        #content, #noticeContent {
+            padding: 16px;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+
+        .text {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-bottom: 12px;
+        }
+
+        .notice {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #ff9f43;
+            margin-bottom: 14px;
+        }
+
+        .notice .material-symbols-outlined {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .splash-btn {
+            padding: 6px 14px;
+            background: #3a3a3a;
+            border: 1px solid #444;
+            color: #eee;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .splash-btn:hover {
+            background: #4a4a4a;
+        }
+
+        #noticePanel {
+            display: none;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .collapsible {
+            background-color: #3a3a3a;
+            color: #eee;
+            cursor: pointer;
+            padding: 8px 12px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 14px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+        }
+
+        .collapsible:hover {
+            background-color: #4a4a4a;
+        }
+
+        .splash-content {
+            padding: 8px 12px;
+            display: none;
+            overflow: hidden;
+            font-size: 13px;
+            line-height: 1.4;
+            background-color: #2f2f2f;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            color: #ccc;
+        }
+
+        #backBtn {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
+<!-- ===== Splash Window ===== -->
+<div id="splash">
+    <div id="banner">
+        <img src="https://i.postimg.cc/cLqbP43T/swrh-restudio.png" alt="Restudio">
+        <div id="close" onclick="closeSplash()">✕</div>
+    </div>
+
+    <div id="content">
+        <div class="title">Restudio Script Editor</div>
+
+        <div class="text">
+            A simple editor for Roland Script
+        </div>
+
+        <div class="notice">
+            <span class="material-symbols-outlined">warning</span>
+            The editor may contain errors in the programming language's compiler.
+        </div>
+
+        <div class="buttons">
+            <button class="splash-btn" onclick="closeSplash()">Start</button>
+        </div>
+    </div>
+</div>
+
 <header>
     <div class="header-left">
         <img src="https://i.postimg.cc/yYCszSyc/swrh-restudio.png" alt="Logo" class="logo">
@@ -235,8 +389,8 @@
             addToConsole('✓ All strings are properly closed', 'success');
         }
         
-        // Check for common commands (removed 'let')
-        const commands = ['var', 'Dnumber', 'character', 'word', 'TFvar', 'const', 
+        // Check for common commands
+        const commands = ['var', 'Dnumber', 'character', 'word', 'TFvar', 
                          'if var', 'if typed', 'get lib:', 'reload!', 'greet', 'msg.log:', 
                          'msg.out:', 'pass!', 'end!'];
         
@@ -386,30 +540,7 @@
             return 'OK';
         }
 
-        // 5. const
-        const constMatch = line.match(/^const\s+(\w+)\s*=\s*(.+);?$/);
-        if (constMatch) {
-            let constName = constMatch[1];
-            let rawValue = constMatch[2].trim();
-            if (rawValue.endsWith(';')) rawValue = rawValue.slice(0, -1);
-            let value = rawValue;
-            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-                value = value.slice(1, -1);
-            }
-
-            if (variables.hasOwnProperty(constName)) {
-                addToConsole(`Error: Variable "${constName}" already exists.`, 'error');
-                return 'ERROR';
-            }
-
-            variables[constName] = value;
-            constants.add(constName);
-            varTypes[constName] = 'const';
-            addToConsole(`Constant defined: ${constName} = ${value}`, 'info');
-            return 'OK';
-        }
-
-        // 6. Library import
+        // 5. Library import
         if (line.startsWith('get lib:')) {
             const libMatch = line.match(/get lib:\("(.+)"\)/);
             if (libMatch) {
@@ -424,7 +555,7 @@
             return 'OK';
         }
 
-        // 7. msg.log
+        // 6. msg.log
         if (line.startsWith('msg.log:')) {
             const logMatch = line.match(/msg\.log:\("(.+)"\)/);
             if (logMatch) {
@@ -453,7 +584,7 @@
             return 'OK';
         }
 
-        // 8. reload!
+        // 7. reload!
         if (line.startsWith('reload! =')) {
             const reloadMatch = line.match(/reload!\s*=\s*\(?"?(\d+)"?\)?/);
             if (reloadMatch) {
@@ -472,7 +603,7 @@
             return 'OK';
         }
 
-        // 9. if var
+        // 8. if var
         if (line.startsWith('if var')) {
             const ifMatch = line.match(/if var\s+(\w+)\s*=\s*\(?"?([^")]+)"?\)?/);
             if (ifMatch) {
@@ -494,7 +625,7 @@
             return 'OK';
         }
 
-        // 10. msg.out (prompt)
+        // 9. msg.out (prompt)
         if (line.startsWith('msg.out:')) {
             const outMatch = line.match(/msg\.out:\("(.+)"\)/);
             if (outMatch) {
@@ -513,7 +644,7 @@
             return 'OK';
         }
 
-        // 11. if typed
+        // 10. if typed
         if (line.startsWith('if typed')) {
             const typedMatch = line.match(/if typed\s+(\d+)\s+in\s+(\w+)/);
             if (typedMatch) {
@@ -541,7 +672,7 @@
             return 'OK';
         }
 
-        // 12. greet
+        // 11. greet
         if (line.startsWith('greet')) {
             const greetMatch = line.match(/greet\s+(\w+):\("(.+)"\)/);
             if (greetMatch) {
@@ -570,7 +701,7 @@
                 root: [
                     [/hi roland\.script!/, "keyword-start"],
                     [/pass!|end!/, "keyword-stop"],
-                    [/var|Dnumber|character|word|TFvar|const/, "type"], // removed 'let'
+                    [/var|Dnumber|character|word|TFvar/, "type"],
                     [/if var|if typed|get lib:|reload!|greet|bookname:/, "function"],
                     [/msg\.(log|out):/, "function"],
                     [/"([^"\\]|\\.)*"/, "string"],
@@ -622,10 +753,6 @@ msg.log:("10-3")
 // Conditions
 if var X = ("5")
 msg.log:("X equals 5")
-
-// Constants
-const Dnumber PI = 3.14;
-msg.log:("Dnumber = PI")
 
 // Repetition
 msg.log:("Hello!")
@@ -680,10 +807,6 @@ msg.log:("15+27")
 if var age = ("25")
 msg.log:("Age is 25")
 
-// Constants
-const Dnumber PI = 3.14;
-msg.log:("PI")
-
 // Repetition
 msg.log:("Hello!")
 reload! = ("3")
@@ -727,6 +850,11 @@ pass!`;
             menu.classList.remove('show');
         }
     };
+
+    // Splash screen functions
+    function closeSplash() {
+        document.getElementById("splash").remove();
+    }
 </script>
 </body>
 </html>
